@@ -1,0 +1,100 @@
+# AURA Flow Charts and Block Diagrams
+
+## 3. Main System Flow Chart
+
+```
+START
+  |
+  ├-► Power On System Initialization
+  |   ├-► Hardware Check
+  |   ├-► Load System Configuration
+  |   └-► Connect to Charging Dock
+  |
+  ├-► Environment Scanning
+  |   ├-► Activate Sensors
+  |   ├-► Map Surroundings
+  |   ├-► Identify Electronic Devices
+  |   └-► Detect Human Presence
+  |
+  ├-► Navigation Mode
+  |   ├-► Receive Task Assignment
+  |   ├-► Calculate Optimal Path
+  |   ├-► Move to Target Location
+  |   └-► Execute Task
+  |       ├-► Control Devices
+  |       ├-► Health Scan
+  |       └-► Collect Data
+  |
+  ├-► Data Processing
+  |   ├-► Analyze Sensor Data
+  |   ├-► Update Device Status
+  |   ├-► Process Health Data
+  |   └-► Generate Reports
+  |
+  ├-► Communication
+  |   ├-► Sync with Charging Dock
+  |   ├-► Update User Interface
+  |   └-► Send Alerts if Required
+  |
+  ├-► Battery Monitoring
+  |   ├-► Check Battery Level
+  |   ├-► If Battery < 20%
+  |   |   └-► Return to Dock
+  |   └-► Continue Operation
+  |
+  └-► Repeat Main Loop
+```
+
+## 4. Main System Block Diagram
+
+```
++---------------------------------------------------------------+
+|                    AURA MAIN SYSTEM                          |
++---------------------------------------------------------------+
+|                                                               |
+|  +--------------+         +--------------+                  |
+|  |   SENSORS    |-------->|  PROCESSOR   |                  |
+|  |              |         |              |                  |
+|  | • Cameras    |         | • CPU/GPU    |                  |
+|  | • LiDAR      |         | • RAM        |                  |
+|  | • Ultrasonic |         | • Storage    |                  |
+|  | • Thermal    |         | • AI Engine  |                  |
+|  | • Biometric  |         +------>-------+                  |
+|  +--------------+                |                          |
+|                                  |                          |
+|  +--------------+         +------>-------+                  |
+|  | NAVIGATION   |<---------|   BHI CORE   |                  |
+|  | SYSTEM       |         |  MODULE      |                  |
+|  |              |         |              |                  |
+|  | • Motors     |         | • Harmonic   |                  |
+|  | • Wheels     |         |   Interface  |                  |
+|  | • Encoders   |         | • Device     |                  |
+|  | • Gyroscope  |         |   Manager    |                  |
+|  +--------------+         | • Health     |                  |
+|                          |   Monitor    |                  |
+|  +--------------+         +------>-------+                  |
+|  | COMMUNICATION|-------------+                          |
+|  | MODULE       |                                          |
+|  |              |         +--------------+                  |
+|  | • WiFi       |-------->|  USER        |                  |
+|  | • Bluetooth  |         |  INTERFACE   |                  |
+|  | • Zigbee     |         |              |                  |
+|  | • Cellular   |         | • Voice      |                  |
+|  +--------------+         | • App        |                  |
+|                          | • Display    |                  |
+|  +--------------+         +--------------+                  |
+|  | POWER        |                                          |
+|  | MANAGEMENT   |                                          |
+|  |              |         +--------------+                  |
+|  | • Battery    |-------->| CHARGING     |                  |
+|  | • Controller |         | DOCK         |                  |
+|  | • Regulator  |         |              |                  |
+|  | • Monitor    |         | • WiFi Hub   |                  |
+|  +--------------+         | • Power      |                  |
+|                          |   Supply     |                  |
+|                          | • Data       |                  |
+|                          |   Server     |                  |
+|                          +--------------+                  |
+|                                                               |
++---------------------------------------------------------------+
+```

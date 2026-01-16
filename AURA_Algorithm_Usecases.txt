@@ -1,0 +1,103 @@
+### 7.2 Algorithm Use Cases
+
+#### 7.2.1 A* Pathfinding Algorithm Use Cases
+
+**Use Case 1: Navigation to Target Room**
+- **Scenario**: User asks AURA to check the kitchen for any issues
+- **Application**: A* algorithm calculates the most efficient path from current location to kitchen
+- **Factors**: Obstacles (furniture), door positions, room layout
+- **Output**: Optimal path with coordinates and turning points
+
+**Use Case 2: Obstacle Avoidance**
+- **Scenario**: AURA detects a new obstacle (moved furniture) during navigation
+- **Application**: A* algorithm recalculates path in real-time
+- **Factors**: Dynamic obstacle position, safety margins, alternative routes
+- **Output**: Updated path avoiding the obstacle
+
+**Use Case 3: Multi-Stop Navigation**
+- **Scenario**: AURA needs to visit multiple rooms for health checks
+- **Application**: Modified A* algorithm with waypoint optimization
+- **Factors**: Traveling salesman problem optimization, energy efficiency
+- **Output**: Optimal route visiting all required locations
+
+#### 7.2.2 Health Monitoring Algorithm Use Cases
+
+**Use Case 1: Regular Health Scans**
+- **Scenario**: Scheduled health monitoring of elderly residents
+- **Application**: Algorithm collects vital signs and compares with baselines
+- **Factors**: Age-specific thresholds, medical history, time of day
+- **Output**: Health status report and trend analysis
+
+**Use Case 2: Emergency Detection**
+- **Scenario**: Sudden fall or health emergency detected
+- **Application**: Algorithm triggers immediate alert protocols
+- **Factors**: Critical thresholds, activity patterns, response time
+- **Output**: Emergency alerts sent to contacts and healthcare providers
+
+**Use Case 3: Preventive Health Monitoring**
+- **Scenario**: Detecting early signs of health deterioration
+- **Application**: Algorithm analyzes trends and patterns over time
+- **Factors**: Historical data comparison, anomaly detection, prediction models
+- **Output**: Early warning alerts and recommendations
+
+#### 7.2.3 Device Control Algorithm Use Cases
+
+**Use Case 1: Automated Lighting Control**
+- **Scenario**: Adjust lighting based on time of day and occupancy
+- **Application**: Algorithm determines optimal lighting levels
+- **Factors**: Ambient light, user preferences, energy saving
+- **Output**: Light intensity and color temperature adjustments
+
+**Use Case 2: Climate Control Optimization**
+- **Scenario**: Maintain comfortable temperature while saving energy
+- **Application**: Algorithm manages AC and fan operations
+- **Factors**: Room temperature, humidity, occupancy, weather forecast
+- **Output**: AC settings, fan speed, and mode adjustments
+
+**Use Case 3: Vacuum Cleaner Coordination**
+- **Scenario**: Coordinate multiple vacuum cleaners for efficient cleaning
+- **Application**: Algorithm allocates cleaning areas and schedules
+- **Factors**: Floor area, dirt level, battery status, user preferences
+- **Output**: Cleaning schedules and area assignments
+
+#### 7.2.4 BHI Communication Algorithm Use Cases
+
+**Use Case 1: Device Discovery and Pairing**
+- **Scenario**: New electronic device added to home network
+- **Application**: BHI algorithm discovers and pairs with device
+- **Factors**: Device type, communication range, frequency compatibility
+- **Output**: Secure connection establishment and device registration
+
+**Use Case 2: Real-time Health Data Transmission**
+- **Scenario**: Transmitting vital signs to charging dock for analysis
+- **Application**: BHI algorithm ensures reliable data transfer
+- **Factors**: Data size, transmission reliability, encryption
+- **Output**: Secure and timely data delivery
+
+**Use Case 3: Multi-Device Synchronization**
+- **Scenario**: Coordinating multiple devices for scene activation
+- **Application**: BHI algorithm manages simultaneous commands
+- **Factors**: Priority levels, execution timing, conflict resolution
+- **Output**: Coordinated device actions and status confirmation
+
+### 7.3 Algorithm Complexity Analysis
+
+**A* Pathfinding Algorithm:**
+- Time Complexity: O(b^d) where b is branching factor and d is solution depth
+- Space Complexity: O(b^d) for storing nodes
+- Optimization: Heuristic function optimization reduces search space
+
+**Health Monitoring Algorithm:**
+- Time Complexity: O(n) where n is number of vital signs
+- Space Complexity: O(n*m) where m is historical data points
+- Optimization: Parallel processing of sensor data
+
+**Device Control Algorithm:**
+- Time Complexity: O(1) for single device, O(n) for multiple devices
+- Space Complexity: O(n) for device state management
+- Optimization: Command queuing and batching
+
+**BHI Communication Algorithm:**
+- Time Complexity: O(log n) for connection establishment
+- Space Complexity: O(1) for single connection
+- Optimization: Frequency hopping and adaptive power control

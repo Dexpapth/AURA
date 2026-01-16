@@ -1,0 +1,81 @@
+# AURA Electronics Flow Charts and Block Diagrams
+
+## 8.1 Electronics System Flow Chart
+
+```
+START ELECTRONICS SYSTEM
+  |
+  ├-► Power Up
+  |   ├-► Battery Voltage Check
+  |   ├-► Initialize Power Distribution
+  |   └-► Enable Voltage Regulators
+  |
+  ├-► Sensor Initialization
+  |   ├-► Calibrate LiDAR
+  |   ├-► Initialize Camera
+  |   ├-► Setup Biometric Sensors
+  |   └-► Test Communication Modules
+  |
+  ├-► Motor Controller Setup
+  |   ├-► Initialize Motor Drivers
+  |   ├-► Calibrate Encoders
+  |   ├-► Test Motor Response
+  |   └-► Enable Movement Control
+  |
+  ├-► BHI Interface Activation
+  |   ├-► Generate Harmonic Signal
+  |   ├-► Calibrate Frequency Range
+  |   ├-► Establish Communication
+  |   └-► Test Device Discovery
+  |
+  ├-► Main Operation Loop
+  |   ├-► Read All Sensors
+  |   ├-► Process Sensor Data
+  |   ├-► Execute Control Commands
+  |   ├-► Update Motor Control
+  |   ├-► Maintain BHI Communication
+  |   └-► Monitor Power Levels
+  |
+  ├-► Error Monitoring
+  |   ├-► Check Sensor Status
+  |   ├-► Verify Motor Operation
+  |   ├-► Monitor Battery Temperature
+  |   └-► Validate Data Integrity
+  |
+  └-► Return to Standby or Continue
+```
+
+## 8.2 Electronics System Block Diagram
+
+```
++-------------------------------------------------------+
+|         AURA ELECTRONICS SYSTEM                       |
++-------------------------------------------------------+
+|                                                       |
+|  +-----------------+                                  |
+|  |  POWER SYSTEM   |                                  |
+|  |                 |                                  |
+|  | • Li-ion Battery|                                  |
+|  | • BMS Circuit   |                                  |
+|  | • DC-DC Conv.   |                                  |
+|  | • Voltage Reg.  |                                  |
+|  | • Power Monitor |                                  |
+|  +--------->-------+                                  |
+|           |                                            |
+|           +-----------------------------------+        |
+|                                               |        |
+|  +------------------+    +-----------------+  |        |
+|  |  SENSOR ARRAY    |    |  PROCESSING     |  |        |
+|  |                  |    |  UNIT           |  |        |
+|  | • LiDAR          |--->|                 |  |        |
+|  | • Camera (RPI)   |--->| • ARM Cortex    |  |        |
+|  | • Ultrasonic     |--->| • GPU           |  |        |
+|  | • Thermal Sensor |--->| • DSP           |  |        |
+|  | • Heart Rate     |--->| • Memory        |  |        |
+|  | • SPO2 Sensor    |--->| • Storage       |  |        |
+|  | • Gyroscope      |--->|                 |  |        |
+|  | • Accelerometer  |--->|                 |  |        |
+|  +------------------+    +--------->-------+  |        |
+|                                    |           |        |
+|  +------------------+               |           |        |
+|  | MOTOR CONTROL    |

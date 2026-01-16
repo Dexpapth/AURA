@@ -1,0 +1,679 @@
+### 10.4 Device Control Code
+
+```python
+"""
+AURA Device Control System
+Control and manage all home electronic devices
+"""
+
+import time
+import json
+from typing import Dict, List
+from enum import Enum
+
+class DeviceType(Enum):
+    LIGHT = "light"
+    FAN = "fan"
+    AC = "ac"
+    VACUUM = "vacuum"
+    CHARGER = "charger"
+    TV = "tv"
+    OTHER = "other"
+
+class DeviceController:
+    def __init__(self):
+        """Initialize device controller"""
+        self.connected_devices = {}
+        self.device_status = {}
+        self.user_permissions = {}
+        
+        # Initialize communication interfaces
+        self.relay_controller = RelayController()
+        self.ir_controller = IRController()
+        self.zigbee_controller = ZigbeeController()
+        self.wifi_controller = WiFiController()
+    
+    def initialize(self):
+        """Initialize device controller"""
+        print("Initializing device controller...")
+        
+        # Initialize all controllers
+        self.relay_controller.initialize()
+        self.ir_controller.initialize()
+        self.zigbee_controller.initialize()
+        self.wifi_controller.initialize()
+        
+        # Discover devices
+        self.discover_devices()
+        
+        # Load device configurations
+        self.load_device_configurations()
+        
+        print("Device controller initialized")
+    
+    def discover_devices(self):
+        """Discover all connectable devices"""
+        print("Discovering devices...")
+        
+        # Discover WiFi devices
+        wifi_devices = self.wifi_controller.discover()
+        for device in wifi_devices:
+            self.register_device(device, 'wifi')
+        
+        # Discover Zigbee devices
+        zigbee_devices = self.zigbee_controller.discover()
+        for device in zigbee_devices:
+            self.register_device(device, 'zigbee')
+        
+        # Discover IR devices
+        ir_devices = self.ir_controller.discover()
+        for device in ir_devices:
+            self.register_device(device, 'ir')
+        
+        # Discover relay-controlled devices
+        relay_devices = self.relay_controller.discover()
+        for device in relay_devices:
+            self.register_device(device, 'relay')
+        
+        print(f"Discovered {len(self.connected_devices)} devices")
+    
+    def register_device(self, device: Dict, protocol: str):
+        """Register a device with the system"""
+        device_id = device['id']
+        self.connected_devices[device_id] = {
+            **device,
+            'protocol': protocol,
+            'status': 'unknown'
+        }
+        print(f"Registered device: {device_id} ({protocol})")
+    
+    def load_device_configurations(self):
+        """Load device configurations from storage"""
+        # This would load from persistent storage
+        pass
+    
+    def execute_command(self, device_id: str, command: str, parameters: Dict = None) -> str:
+        """
+        Execute command on device
+        
+        Args:
+            device_id: ID of the device
+            command: Command to execute (turn_on, turn_off, set_value, etc.)
+            parameters: Additional parameters for the command
+            
+        Returns:
+            Execution result message
+        """
+        if device_id not in self.connected_devices:
+            return f"Device {device_id} not found"
+        
+        device = self.connected_devices[device_id]
+        protocol = device['protocol']
+        
+        print(f"Executing {command} on {device_id} using {protocol}")
+        
+        # Get controller for protocol
+        controller = self.get_controller(protocol)
+        
+        # Execute command
+        try:
+            if command == "turn_on":
+                result = controller.turn_on(device_id)
+            elif command == "turn_off":
+                result = controller.turn_off(device_id)
+            elif command == "set_value":
+                result = controller.set_value(device_id, parameters)
+            elif command == "get_status":
+                result = controller.get_status(device_id)
+            else:
+                return f"Unknown command: {command}"
+            
+            # Update device status
+            if result['success']:
+                self.device_status[device_id] = result['status']
+            
+            return result['message']
+        
+        except Exception as e:
+            print(f"Command execution failed: {e}")
+            return f"Command failed: {str(e)}"
+    
+    def get_controller(self, protocol: str):
+        """Get controller for specific protocol"""
+        controllers = {
+            'wifi': self.wifi_controller,
+            'zigbee': self.zigbee_controller,
+            'ir': self.ir_controller,
+            'relay': self.relay_controller
+        }
+        return controllers.get(protocol)
+    
+    def check_status(self, device_id: str) -> Dict:
+        """Check status of a device"""
+        if device_id not in self.connected_devices:
+            return {'needs_attention': False}
+        
+        device = self.connected_devices[device_id]
+        protocol = device['protocol']
+        controller = self.get_controller(protocol)
+        
+        status = controller.get_status(device_id)
+        
+        # Determine if device needs attention
+        needs_attention = self.evaluate_device_status(device_id, status)
+        
+        return {
+            'status': status,
+            'needs_attention': needs_attention
+        }
+    
+    def evaluate_device_status(self, device_id: str, status: Dict) -> bool:
+        """Evaluate if device needs attention"""
+        # Check for error states
+        if status.get('error'):
+            return True
+        
+        # Check for maintenance needed
+        if status.get('maintenance_needed'):
+            return True
+        
+        # Check for abnormal operation
+        if status.get('abnormal'):
+            return True
+        
+        return False
+    
+    def take_action(self, device_id: str, status: Dict):
+        """Take action on device that needs attention"""
+        print(f"Taking action on device {device_id}")
+        
+        if status.get('error'):
+            # Attempt to reset device
+            self.execute_command(device_id, 'reset')
+        
+        if status.get('maintenance_needed'):
+            # Notify user
+            self.notify_maintenance_needed(device_id)
+    
+    def notify_maintenance_needed(self, device_id: str):
+        """Notify user about maintenance needed"""
+        print(f"Notification: Device {device_id} needs maintenance")
+        # This would send notification to user
+    
+    def get_all_status(self) -> Dict:
+        """Get status of all devices"""
+        all_status = {}
+        for device_id in self.connected_devices:
+            all_status[device_id] = self.check_status(device_id)
+        return all_status
+    
+    def activate_emergency_mode(self):
+        """Activate emergency mode for all devices"""
+        print("Activating emergency mode...")
+        
+        for device_id in self.connected_devices:
+            # Turn off all devices
+            self.execute_command(device_id, 'turn_off')
+        
+        # Turn on emergency lights
+        emergency_light_ids = self.get_emergency_lights()
+        for light_id in emergency_light_ids:
+            self.execute_command(light_id, 'turn_on')
+    
+    def get_emergency_lights(self) -> List[str]:
+        """Get list of emergency light device IDs"""
+        # This would return configured emergency lights
+        return []
+    
+    def shutdown(self):
+        """Shutdown device controller"""
+        print("Shutting down device controller...")
+        self.relay_controller.shutdown()
+        self.ir_controller.shutdown()
+        self.zigbee_controller.shutdown()
+        self.wifi_controller.shutdown()
+        print("Device controller shutdown complete")
+
+# Controller classes
+class RelayController:
+    def initialize(self):
+        print("Relay controller initialized")
+    
+    def discover(self) -> List[Dict]:
+        # Return configured relay devices
+        return [
+            {'id': 'relay_light_1', 'type': DeviceType.LIGHT, 'name': 'Living Room Light'},
+            {'id': 'relay_fan_1', 'type': DeviceType.FAN, 'name': 'Bedroom Fan'},
+            {'id': 'relay_ac_1', 'type': DeviceType.AC, 'name': 'Living Room AC'}
+        ]
+    
+    def turn_on(self, device_id: str) -> Dict:
+        print(f"Turning on {device_id}")
+        return {'success': True, 'status': 'on', 'message': f"{device_id} turned on"}
+    
+    def turn_off(self, device_id: str) -> Dict:
+        print(f"Turning off {device_id}")
+        return {'success': True, 'status': 'off', 'message': f"{device_id} turned off"}
+    
+    def set_value(self, device_id: str, parameters: Dict) -> Dict:
+        print(f"Setting {device_id} to {parameters}")
+        return {'success': True, 'status': 'on', 'message': f"{device_id} set to {parameters}"}
+    
+    def get_status(self, device_id: str) -> Dict:
+        return {'state': 'on', 'power': 100, 'error': None}
+    
+    def shutdown(self):
+        pass
+
+class IRController:
+    def initialize(self):
+        print("IR controller initialized")
+    
+    def discover(self) -> List[Dict]:
+        return [
+            {'id': 'ir_tv_1', 'type': DeviceType.TV, 'name': 'Living Room TV'},
+            {'id': 'ir_ac_2', 'type': DeviceType.AC, 'name': 'Bedroom AC'}
+        ]
+    
+    def turn_on(self, device_id: str) -> Dict:
+        print(f"Sending IR power on to {device_id}")
+        return {'success': True, 'status': 'on', 'message': f"{device_id} turned on"}
+    
+    def turn_off(self, device_id: str) -> Dict:
+        print(f"Sending IR power off to {device_id}")
+        return {'success': True, 'status': 'off', 'message': f"{device_id} turned off"}
+    
+    def set_value(self, device_id: str, parameters: Dict) -> Dict:
+        print(f"Sending IR command to {device_id}: {parameters}")
+        return {'success': True, 'status': 'on', 'message': f"{device_id} set"}
+    
+    def get_status(self, device_id: str) -> Dict:
+        return {'state': 'unknown', 'error': None}
+    
+    def shutdown(self):
+        pass
+
+class ZigbeeController:
+    def initialize(self):
+        print("Zigbee controller initialized")
+    
+    def discover(self) -> List[Dict]:
+        return [
+            {'id': 'zigbee_vacuum_1', 'type': DeviceType.VACUUM, 'name': 'Robot Vacuum'},
+            {'id': 'zigbee_light_2', 'type': DeviceType.LIGHT, 'name': 'Kitchen Light'}
+        ]
+    
+    def turn_on(self, device_id: str) -> Dict:
+        print(f"Sending Zigbee command to turn on {device_id}")
+        return {'success': True, 'status': 'on', 'message': f"{device_id} turned on"}
+    
+    def turn_off(self, device_id: str) -> Dict:
+        print(f"Sending Zigbee command to turn off {device_id}")
+        return {'success': True, 'status': 'off', 'message': f"{device_id} turned off"}
+    
+    def set_value(self, device_id: str, parameters: Dict) -> Dict:
+        print(f"Sending Zigbee command to {device_id}: {parameters}")
+        return {'success': True, 'status': 'on', 'message': f"{device_id} set"}
+    
+    def get_status(self, device_id: str) -> Dict:
+        return {'state': 'on', 'battery': 85, 'error': None}
+    
+    def shutdown(self):
+        pass
+
+class WiFiController:
+    def initialize(self):
+        print("WiFi controller initialized")
+    
+    def discover(self) -> List[Dict]:
+        return [
+            {'id': 'wifi_charger_1', 'type': DeviceType.CHARGER, 'name': 'Phone Charger'}
+        ]
+    
+    def turn_on(self, device_id: str) -> Dict:
+        print(f"Sending WiFi command to turn on {device_id}")
+        return {'success': True, 'status': 'on', 'message': f"{device_id} turned on"}
+    
+    def turn_off(self, device_id: str) -> Dict:
+        print(f"Sending WiFi command to turn off {device_id}")
+        return {'success': True, 'status': 'off', 'message': f"{device_id} turned off"}
+    
+    def set_value(self, device_id: str, parameters: Dict) -> Dict:
+        print(f"Sending WiFi command to {device_id}: {parameters}")
+        return {'success': True, 'status': 'on', 'message': f"{device_id} set"}
+    
+    def get_status(self, device_id: str) -> Dict:
+        return {'state': 'on', 'power_output': 15, 'error': None}
+    
+    def shutdown(self):
+        pass
+```
+
+### 10.5 Communication Code
+
+```python
+"""
+AURA Communication System
+Bio Harmonic Interface (BHI) communication module
+"""
+
+import socket
+import threading
+import json
+import time
+from typing import Dict, List
+
+class CommunicationModule:
+    def __init__(self):
+        """Initialize communication module"""
+        self.dock_connected = False
+        self.connected_devices = []
+        self.bhi_frequencies = {}
+        self.communication_log = []
+    
+    def initialize(self):
+        """Initialize communication module"""
+        print("Initializing communication module...")
+        
+        # Initialize BHI interface
+        self.bhi_interface = BHIInterface()
+        self.bhi_interface.initialize()
+        
+        # Initialize network interfaces
+        self.wifi_client = WiFiClient()
+        self.wifi_client.initialize()
+        
+        print("Communication module initialized")
+    
+    def connect_to_dock(self):
+        """Connect to charging dock"""
+        print("Connecting to charging dock...")
+        
+        try:
+            # Connect via BHI
+            dock_found = self.bhi_interface.discover_device('charging_dock')
+            
+            if dock_found:
+                self.dock_connected = True
+                print("Connected to charging dock via BHI")
+                return True
+            else:
+                print("Charging dock not found")
+                return False
+        
+        except Exception as e:
+            print(f"Connection to dock failed: {e}")
+            return False
+    
+    def establish_harmonic_link(self, device_id: str) -> bool:
+        """
+        Establish harmonic link with device using BHI
+        
+        Args:
+            device_id: ID of the device to connect to
+            
+        Returns:
+            True if connection successful, False otherwise
+        """
+        print(f"Establishing harmonic link with {device_id}...")
+        
+        # Calculate optimal frequency
+        optimal_freq = self.bhi_interface.calculate_optimal_frequency(device_id)
+        
+        # Try to establish connection
+        connection_status = self.bhi_interface.connect(device_id, optimal_freq)
+        
+        if connection_status:
+            self.bhi_frequencies[device_id] = optimal_freq
+            self.connected_devices.append(device_id)
+            print(f"Harmonic link established with {device_id} at {optimal_freq} Hz")
+            return True
+        else:
+            print(f"Failed to establish harmonic link with {device_id}")
+            return False
+    
+    def send_data(self, device_id: str, data: Dict) -> bool:
+        """Send data to device via BHI"""
+        if device_id not in self.connected_devices:
+            print(f"Device {device_id} not connected")
+            return False
+        
+        frequency = self.bhi_frequencies.get(device_id)
+        if not frequency:
+            print(f"No frequency set for {device_id}")
+            return False
+        
+        try:
+            # Packetize data
+            packets = self.bhi_interface.packetize_data(data)
+            
+            # Transmit packets
+            for packet in packets:
+                self.bhi_interface.transmit(packet, frequency)
+                
+                # Wait for acknowledgement
+                ack_received = self.bhi_interface.wait_for_ack(timeout=1.0)
+                if not ack_received:
+                    print("Packet not acknowledged, retransmitting...")
+                    self.bhi_interface.transmit(packet, frequency)
+            
+            print(f"Data sent to {device_id}")
+            return True
+        
+        except Exception as e:
+            print(f"Failed to send data to {device_id}: {e}")
+            return False
+    
+    def receive_data(self, device_id: str) -> Dict:
+        """Receive data from device via BHI"""
+        if device_id not in self.connected_devices:
+            print(f"Device {device_id} not connected")
+            return None
+        
+        frequency = self.bhi_frequencies.get(device_id)
+        
+        try:
+            # Receive data
+            data = self.bhi_interface.receive(frequency)
+            
+            print(f"Data received from {device_id}")
+            return data
+        
+        except Exception as e:
+            print(f"Failed to receive data from {device_id}: {e}")
+            return None
+    
+    def send_health_data(self, health_data: Dict):
+        """Send health data to dock"""
+        if not self.dock_connected:
+            print("Dock not connected")
+            return
+        
+        print("Sending health data to dock...")
+        success = self.send_data('charging_dock', {
+            'type': 'health_data',
+            'data': health_data
+        })
+        
+        if success:
+            print("Health data sent successfully")
+    
+    def sync_data(self, data_type: str, data: any):
+        """Synchronize data with dock"""
+        if not self.dock_connected:
+            return
+        
+        print(f"Syncing {data_type} with dock...")
+        self.send_data('charging_dock', {
+            'type': 'sync',
+            'data_type': data_type,
+            'data': data
+        })
+    
+    def send_emergency_alert(self, health_data: Dict):
+        """Send emergency alert to dock"""
+        if not self.dock_connected:
+            return
+        
+        print("Sending emergency alert...")
+        self.send_data('charging_dock', {
+            'type': 'emergency_alert',
+            'priority': 'high',
+            'data': health_data
+        })
+    
+    def notify_emergency_contacts(self, health_data: Dict):
+        """Notify emergency contacts"""
+        print("Notifying emergency contacts...")
+        # This would implement SMS, email, or app notifications
+        pass
+    
+    def call_emergency_services(self, emergency_details: Dict):
+        """Call emergency services"""
+        print("Calling emergency services...")
+        # This would implement emergency service call
+        pass
+    
+    def disconnect(self):
+        """Disconnect from all devices"""
+        print("Disconnecting from all devices...")
+        
+        for device_id in self.connected_devices:
+            self.bhi_interface.disconnect(device_id)
+        
+        self.connected_devices.clear()
+        self.dock_connected = False
+        print("Disconnected from all devices")
+
+class BHIInterface:
+    """Bio Harmonic Interface implementation"""
+    
+    def __init__(self):
+        self.frequencies = {}
+        self.connected_devices = {}
+    
+    def initialize(self):
+        """Initialize BHI interface"""
+        print("Initializing BHI interface...")
+        # Initialize hardware
+        self.signal_generator = SignalGenerator()
+        self.rf_transceiver = RFTransceiver()
+        self.frequency_analyzer = FrequencyAnalyzer()
+        
+        print("BHI interface initialized")
+    
+    def discover_device(self, device_type: str) -> bool:
+        """Discover device using BHI"""
+        print(f"Discovering {device_type}...")
+        # Scan frequencies for device signature
+        return True  # Placeholder
+    
+    def calculate_optimal_frequency(self, device_id: str) -> float:
+        """Calculate optimal frequency for device communication"""
+        # Analyze device characteristics
+        # Return optimal frequency
+        return 2.4e9  # 2.4 GHz placeholder
+    
+    def connect(self, device_id: str, frequency: float) -> bool:
+        """Establish harmonic connection with device"""
+        # Generate harmonic signal
+        # Establish link
+        return True  # Placeholder
+    
+    def disconnect(self, device_id: str):
+        """Disconnect from device"""
+        if device_id in self.connected_devices:
+            del self.connected_devices[device_id]
+    
+    def packetize_data(self, data: Dict) -> List[bytes]:
+        """Packetize data for transmission"""
+        # Convert data to packets
+        json_data = json.dumps(data)
+        # Split into packets
+        packet_size = 1024
+        packets = []
+        for i in range(0, len(json_data), packet_size):
+            packet = json_data[i:i+packet_size].encode()
+            packets.append(packet)
+        return packets
+    
+    def transmit(self, packet: bytes, frequency: float):
+        """Transmit packet at specified frequency"""
+        print(f"Transmitting {len(packet)} bytes at {frequency} Hz")
+        # Actual transmission would go here
+    
+    def wait_for_ack(self, timeout: float = 1.0) -> bool:
+        """Wait for acknowledgement"""
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            # Check for ACK
+            ack = self.check_for_ack()
+            if ack:
+                return True
+            time.sleep(0.1)
+        return False
+    
+    def check_for_ack(self) -> bool:
+        """Check for acknowledgement packet"""
+        # Check for ACK
+        return True  # Placeholder
+    
+    def receive(self, frequency: float) -> Dict:
+        """Receive data at specified frequency"""
+        print(f"Receiving data at {frequency} Hz")
+        # Actual reception would go here
+        return {}  # Placeholder
+
+class WiFiClient:
+    """WiFi client for network communication"""
+    
+    def __init__(self):
+        self.connected = False
+        self.socket = None
+    
+    def initialize(self):
+        """Initialize WiFi client"""
+        print("Initializing WiFi client...")
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print("WiFi client initialized")
+    
+    def connect(self, host: str, port: int) -> bool:
+        """Connect to WiFi host"""
+        try:
+            self.socket.connect((host, port))
+            self.connected = True
+            return True
+        except Exception as e:
+            print(f"WiFi connection failed: {e}")
+            return False
+    
+    def send(self, data: str):
+        """Send data via WiFi"""
+        if self.connected:
+            self.socket.send(data.encode())
+    
+    def receive(self, buffer_size: int = 1024) -> str:
+        """Receive data via WiFi"""
+        if self.connected:
+            return self.socket.recv(buffer_size).decode()
+        return None
+    
+    def disconnect(self):
+        """Disconnect WiFi"""
+        if self.socket:
+            self.socket.close()
+            self.connected = False
+
+# Hardware classes (simplified)
+class SignalGenerator:
+    def initialize(self):
+        pass
+
+class RFTransceiver:
+    def initialize(self):
+        pass
+
+class FrequencyAnalyzer:
+    def initialize(self):
+        pass
+```</new_str>

@@ -1,0 +1,252 @@
+# AURA Electronic Modules and Description
+
+## 9. Electronic Modules and Description
+
+### 9.1 Navigation Electronics Module
+
+**Description:**
+The Navigation Electronics Module is responsible for AURA's movement and spatial awareness within the home environment. This module integrates multiple sensors and motor controllers to enable autonomous navigation and obstacle avoidance.
+
+**Components:**
+
+1. **LiDAR Sensor (Light Detection and Ranging)**
+   - Model: RPLIDAR A1 or equivalent
+   - Range: Up to 12 meters
+   - Scan Rate: 360° rotation at 5.5 Hz
+   - Purpose: Create 2D maps of the environment
+   - Resolution: 1° angular resolution
+
+2. **Motor Controller**
+   - Model: L298N Dual H-Bridge Motor Driver
+   - Voltage: 5V-35V input, 5V output for logic
+   - Current: 2A per channel continuous
+   - Purpose: Control speed and direction of motors
+   - Features: PWM speed control, direction control
+
+3. **DC Motors with Encoders**
+   - Quantity: 5 motors (one for each side of pentagon)
+   - Voltage: 12V DC
+   - RPM: 300 RPM with gear reduction
+   - Encoder Resolution: 12 CPR (Counts Per Revolution)
+   - Purpose: Provide movement and position feedback
+
+4. **Ultrasonic Sensors**
+   - Model: HC-SR04
+   - Range: 2cm to 400cm
+   - Accuracy: ±3mm
+   - Quantity: 5 sensors (one per side)
+   - Purpose: Detect obstacles and measure distances
+
+5. **Inertial Measurement Unit (IMU)**
+   - Model: MPU-6050
+   - Contains: 3-axis gyroscope, 3-axis accelerometer
+   - Purpose: Track orientation and movement
+   - Features: Digital Motion Processor (DMP)
+
+**Technical Specifications:**
+- Power Consumption: 15W during navigation
+- Operating Voltage: 12V DC
+- Communication: I2C, SPI, UART protocols
+- Update Rate: 50Hz sensor fusion
+- Response Time: < 100ms for obstacle avoidance
+- Navigation Accuracy: ±5cm position tracking
+
+### 9.2 Health Monitoring Electronics Module
+
+**Description:**
+The Health Monitoring Module enables AURA to scan and monitor human vital signs non-invasively. This module integrates multiple biometric sensors to provide comprehensive health data collection and analysis.
+
+**Components:**
+
+1. **Thermal Camera**
+   - Model: MLX90640 or FLIR Lepton
+   - Resolution: 32×24 pixels
+   - Temperature Range: -40°C to 300°C
+   - Accuracy: ±1°C
+   - Purpose: Body temperature scanning
+   - Field of View: 55° × 35°
+
+2. **Heart Rate Sensor**
+   - Model: MAX30102 Pulse Oximeter
+   - Wavelengths: Red (660nm) and IR (880nm)
+   - Sample Rate: 50-4000 samples per second
+   - Purpose: Heart rate and blood oxygen monitoring
+   - Interface: I2C communication
+
+3. **Blood Pressure Sensor**
+   - Model: Oscillometric pressure sensor
+   - Range: 0-300 mmHg
+   - Accuracy: ±3 mmHg
+   - Purpose: Non-invasive blood pressure measurement
+   - Method: Cuff-less estimation using PPG signals
+
+4. **Respiration Rate Sensor**
+   - Model: Piezoelectric belt sensor
+   - Sensitivity: 0.1 mm displacement
+   - Range: 5-60 breaths per minute
+   - Purpose: Monitor breathing patterns
+   - Method: Chest expansion detection
+
+5. **RGB Camera**
+   - Model: Raspberry Pi Camera Module V2
+   - Resolution: 8MP
+   - Frame Rate: 30 FPS
+   - Purpose: Visual monitoring and activity recognition
+   - Features: Auto-focus, low-light performance
+
+**Technical Specifications:**
+- Power Consumption: 8W during active scanning
+- Operating Voltage: 5V DC for most sensors
+- Data Rate: 1Mbps for sensor data
+- Scan Time: 30 seconds for full health check
+- Accuracy: 95% for vital sign measurements
+
+### 9.3 Device Control Electronics Module
+
+**Description:**
+The Device Control Module manages all electronic devices connected to the AURA ecosystem. This module serves as the central hub for transmitting control commands and receiving status updates from home appliances.
+
+**Components:**
+
+1. **Microcontroller Unit (MCU)**
+   - Model: ESP32-WROOM-32
+   - Architecture: Xtensa Dual-Core 32-bit LX6
+   - Clock Speed: 240 MHz
+   - Memory: 520KB SRAM, 4MB Flash
+   - Purpose: Execute device control commands
+   - Wireless: WiFi and Bluetooth 5.0
+
+2. **Relay Module**
+   - Model: 8-channel 5V Relay Board
+   - Switching Capacity: 10A 250V AC / 10A 30V DC
+   - Quantity: 4 modules (32 relays total)
+   - Purpose: Control high-power devices (AC, fans, lights)
+   - Features: Opto-isolation for safety
+
+3. **Infrared Transmitter/Receiver**
+   - Model: VS1838B IR Receiver and IR LED
+   - Carrier Frequency: 38kHz
+   - Range: Up to 10 meters
+   - Purpose: Control IR-based devices (TV, AC remotes)
+   - Features: Learning capability for various codes
+
+4. **Zigbee Coordinator**
+   - Model: XBee Series 3
+   - Protocol: Zigbee PRO
+   - Range: Up to 100 meters
+   - Purpose: Communicate with Zigbee devices
+   - Network: Supports up to 100+ devices
+
+5. **WiFi Module**
+   - Model: ESP8266 or integrated in ESP32
+   - Standards: 802.11 b/g/n
+   - Frequency: 2.4GHz
+   - Purpose: WiFi device control
+   - Security: WPA2-PSK encryption
+
+**Technical Specifications:**
+- Power Consumption: 5W active, 1W standby
+- Operating Voltage: 5V DC, 3.3V logic
+- Communication Range: WiFi (50m), Zigbee (100m), IR (10m)
+- Device Capacity: 50+ devices
+- Response Time: < 500ms for command execution
+
+### 9.4 Charging Dock Electronics Module
+
+**Description:**
+The Charging Dock serves as both a power station and communication hub for AURA. It provides wireless charging, establishes the central WiFi network, and processes data from the robot.
+
+**Components:**
+
+1. **Wireless Charging Coil**
+   - Standard: Qi Wireless Charging
+   - Power Output: 15W maximum
+   - Efficiency: 85% charging efficiency
+   - Range: 5mm detection distance
+   - Purpose: Charge AURA's battery automatically
+   - Features: Foreign object detection
+
+2. **WiFi Router Module**
+   - Model: Qualcomm IPQ4019
+   - Standards: 802.11 a/b/g/n/ac
+   - Frequency: Dual-band 2.4GHz and 5GHz
+   - Speed: AC1200 (867Mbps + 300Mbps)
+   - Purpose: Central WiFi hub for home devices
+   - Range: Up to 1500 sq ft coverage
+
+3. **Power Supply Unit**
+   - Input: 100-240V AC 50/60Hz
+   - Output: 12V DC 5A (for AURA), 5V DC 3A (for electronics)
+   - Purpose: Provide stable power to dock and AURA
+   - Features: Over-current and over-voltage protection
+
+4. **Data Storage Server**
+   - Storage: 1TB SSD
+   - Interface: SATA 6Gb/s
+   - Purpose: Store health data, system logs, user preferences
+   - Backup: Cloud synchronization capability
+
+5. **Communication Processor**
+   - Model: Raspberry Pi 4 Model B
+   - CPU: Quad-core Cortex-A72
+   - RAM: 4GB LPDDR4
+   - Purpose: Process data from AURA and manage communications
+   - Connectivity: Gigabit Ethernet, USB 3.0
+
+**Technical Specifications:**
+- Power Consumption: 25W during charging, 10W idle
+- Operating Voltage: 100-240V AC input, 12V/5V DC output
+- Charging Time: 2 hours for full charge
+- WiFi Capacity: 50+ devices
+- Data Transfer: 1Gbps wired, 867Mbps wireless
+
+### 9.5 BHI (Bio Harmonic Interface) Electronics Module
+
+**Description:**
+The Bio Harmonic Interface Module is AURA's proprietary technology for establishing harmonious communication with electronic devices and humans. This module uses specific frequency ranges to create optimal communication channels.
+
+**Components:**
+
+1. **Signal Generator**
+   - Type: Direct Digital Synthesis (DDS)
+   - Frequency Range: 1kHz - 10MHz
+   - Resolution: 1Hz
+   - Purpose: Generate harmonic signals for communication
+   - Accuracy: ±0.01% frequency stability
+
+2. **RF Transceiver**
+   - Model: CC1352R (Sub-1 GHz and 2.4 GHz)
+   - Modulation: GFSK, FSK, OOK
+   - Output Power: +20 dBm
+   - Range: Up to 2 km (open space)
+   - Purpose: Transmit and receive harmonic signals
+   - Sensitivity: -124 dBm
+
+3. **Frequency Analyzer**
+   - Type: FFT-based spectrum analyzer
+   - Bandwidth: DC to 10MHz
+   - Resolution: 1Hz
+   - Purpose: Analyze ambient frequencies for optimal communication
+   - Features: Real-time frequency tracking
+
+4. **Phase-Locked Loop (PLL)**
+   - Type: Digital PLL
+   - Lock Range: 1kHz - 5MHz
+   - Lock Time: < 100ms
+   - Purpose: Maintain frequency synchronization
+   - Stability: ±0.1 ppm
+
+5. **Antenna Array**
+   - Type: Multi-frequency adaptive antenna
+   - Bands: 433MHz, 868MHz, 915MHz, 2.4GHz
+   - Gain: 5dBi
+   - Purpose: Transmit and receive harmonic signals
+   - Features: Beamforming capability
+
+**Technical Specifications:**
+- Power Consumption: 3W active, 0.5W sleep
+- Operating Voltage: 3.3V DC
+- Communication Range: 2km line of sight, 500m indoor
+- Data Rate: 250 kbps - 2 Mbps
+- Channels: 16 parallel communication channels
+- Latency: < 10ms for connection establishment

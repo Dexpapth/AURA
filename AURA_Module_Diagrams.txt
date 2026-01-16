@@ -1,0 +1,63 @@
+# AURA Module Flow Charts and Block Diagrams
+
+## 5.1 Navigation Module Flow Chart
+
+```
+START NAVIGATION
+  |
+  ├-► Get Target Location
+  |   ├-► From Task Queue
+  |   └-► From User Command
+  |
+  ├-► Load House Map
+  |   ├-► Retrieve from Memory
+  |   └-► Update with New Obstacles
+  |
+  ├-► Path Planning
+  |   ├-► Calculate Optimal Route
+  |   ├-► Apply A* Algorithm
+  |   └-► Avoid Obstacles
+  |
+  ├-► Start Movement
+  |   ├-► Activate Motors
+  |   ├-► Adjust Speed
+  |   └-► Monitor Direction
+  |
+  ├-► Obstacle Detection (Continuous)
+  |   ├-► Scan with Sensors
+  |   ├-► If Obstacle Detected
+  |   |   ├-► Stop Movement
+  |   |   ├-► Recalculate Path
+  |   |   └-► Resume Movement
+  |   └-► Continue if Clear
+  |
+  ├-► Position Tracking
+  |   ├-► Read Encoders
+  |   ├-► Check Gyroscope
+  |   └-► Verify Location
+  |
+  ├-► Destination Reached?
+  |   ├-► NO → Continue Navigation
+  |   └-► YES → Execute Task
+  |
+  └-► Return to Idle State
+```
+
+## 5.2 Navigation Module Block Diagram
+
+```
++-------------------------------------------------------+
+|           NAVIGATION MODULE                           |
++-------------------------------------------------------+
+|                                                       |
+|  +--------------+      +---------------------------+  |
+|  |  SENSORS     |----->|   PATH PLANNING ENGINE    |  |
+|  |              |      |                           |  |
+|  | • LiDAR      |      | • A* Algorithm            |  |
+|  | • Ultrasonic |      | • Obstacle Avoidance      |  |
+|  | • Camera     |      | • Route Optimization      |  |
+|  | • Encoders   |      | • Dynamic Re-routing      |  |
+|  +--------------+      +------------->--------------+  |
+|                                     |                 |
+|  +--------------+                   |                 |
+|  |  MOTORS     |

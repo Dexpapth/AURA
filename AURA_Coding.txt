@@ -1,0 +1,875 @@
+# AURA Coding and Explanations
+
+## 10. Coding and Explanations
+
+### 10.1 Main Control Code
+
+```python
+"""
+AURA Main Control System
+Autonomous Universal Robotic Assistant
+Main controller for navigation, health monitoring, and device control
+"""
+
+import time
+import threading
+from queue import Queue
+import logging
+from sensors import SensorManager
+from navigation import NavigationSystem
+from health_monitor import HealthMonitor
+from device_control import DeviceController
+from communication import CommunicationModule
+from power_management import PowerManager
+
+class AuraController:
+    def __init__(self):
+        """Initialize AURA main controller with all subsystems"""
+        # System configuration
+        self.system_active = True
+        self.task_queue = Queue()
+        self.connected_devices = []
+        
+        # Initialize subsystems
+        self.sensor_manager = SensorManager()
+        self.navigation = NavigationSystem()
+        self.health_monitor = HealthMonitor()
+        self.device_controller = DeviceController()
+        self.communication = CommunicationModule()
+        self.power_manager = PowerManager()
+        
+        # Logging configuration
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        self.logger = logging.getLogger('AuraController')
+        
+    def initialize_system(self):
+        """Initialize all hardware components and systems"""
+        self.logger.info("Initializing AURA system...")
+        
+        try:
+            # Initialize sensor array
+            self.sensor_manager.initialize()
+            
+            # Initialize navigation system
+            self.navigation.initialize()
+            
+            # Initialize health monitoring
+            self.health_monitor.initialize()
+            
+            # Initialize device controller
+            self.device_controller.initialize()
+            
+            # Establish communication with dock
+            self.communication.connect_to_dock()
+            
+            # Check battery status
+            battery_level = self.power_manager.get_battery_level()
+            self.logger.info(f"Battery level: {battery_level}%")
+            
+            self.logger.info("System initialization complete")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Initialization failed: {e}")
+            return False
+    
+    def main_loop(self):
+        """Main operation loop for AURA"""
+        self.logger.info("Starting main operation loop")
+        
+        while self.system_active:
+            try:
+                # Process tasks from queue
+                if not self.task_queue.empty():
+                    current_task = self.task_queue.get()
+                    self.execute_task(current_task)
+                
+                # Health monitoring cycle
+                if self.sensor_manager.detect_human_presence():
+                    self.perform_health_scan()
+                
+                # Device management
+                self.manage_connected_devices()
+                
+                # Navigation and movement
+                self.handle_navigation()
+                
+                # Power management
+                self.manage_power()
+                
+                # Data synchronization
+                self.sync_with_dock()
+                
+                # Small delay to prevent CPU overload
+                time.sleep(0.1)
+                
+            except Exception as e:
+                self.logger.error(f"Error in main loop: {e}")
+                continue
+    
+    def execute_task(self, task):
+        """Execute a specific task from the task queue"""
+        self.logger.info(f"Executing task: {task['type']}")
+        
+        try:
+            if task['type'] == 'navigation':
+                self.navigation.navigate_to(task['location'])
+            
+            elif task['type'] == 'device_control':
+                self.device_controller.execute_command(
+                    task['device_id'],
+                    task['command'],
+                    task.get('parameters', {})
+                )
+            
+            elif task['type'] == 'health_scan':
+                self.health_monitor.perform_full_scan()
+            
+            elif task['type'] == 'emergency':
+                self.handle_emergency(task['details'])
+            
+            self.logger.info(f"Task completed: {task['type']}")
+            
+        except Exception as e:
+            self.logger.error(f"Task execution failed: {e}")
+    
+    def perform_health_scan(self):
+        """Perform health scan on detected human"""
+        self.logger.info("Performing health scan...")
+        
+        try:
+            # Collect biometric data
+            health_data = self.health_monitor.collect_biometric_data()
+            
+            # Analyze health data
+            analysis_result = self.health_monitor.analyze_data(health_data)
+            
+            # Check for alerts
+            if analysis_result['alert_required']:
+                self.generate_health_alert(analysis_result)
+            
+            # Store data
+            self.health_monitor.store_data(health_data)
+            
+            # Sync with dock
+            self.communication.send_health_data(health_data)
+            
+        except Exception as e:
+            self.logger.error(f"Health scan failed: {e}")
+    
+    def manage_connected_devices(self):
+        """Monitor and manage all connected electronic devices"""
+        for device in self.connected_devices:
+            try:
+                status = self.device_controller.check_status(device)
+                
+                if status['needs_attention']:
+                    self.device_controller.take_action(device, status)
+                
+            except Exception as e:
+                self.logger.error(f"Device management error for {device}: {e}")
+    
+    def handle_navigation(self):
+        """Handle navigation and movement"""
+        try:
+            # Update position from sensors
+            current_position = self.navigation.get_current_position()
+            target_position = self.navigation.get_target_position()
+            
+            if current_position != target_position:
+                # Calculate path
+                path = self.navigation.calculate_path(
+                    current_position,
+                    target_position
+                )
+                
+                # Navigate to target
+                self.navigation.navigate(path)
+        
+        except Exception as e:
+            self.logger.error(f"Navigation error: {e}")
+    
+    def manage_power(self):
+        """Monitor and manage power consumption"""
+        try:
+            battery_level = self.power_manager.get_battery_level()
+            
+            if battery_level < 20:
+                self.logger.warning("Low battery, returning to dock")
+                self.navigation.navigate_to('charging_dock')
+                self.power_manager.start_charging()
+        
+        except Exception as e:
+            self.logger.error(f"Power management error: {e}")
+    
+    def sync_with_dock(self):
+        """Synchronize data with charging dock"""
+        try:
+            # Sync health data
+            health_data = self.health_monitor.get_recent_data()
+            self.communication.sync_data('health', health_data)
+            
+            # Sync device status
+            device_status = self.device_controller.get_all_status()
+            self.communication.sync_data('devices', device_status)
+            
+            # Sync system logs
+            logs = self.logger.get_recent_logs()
+            self.communication.sync_data('logs', logs)
+            
+        except Exception as e:
+            self.logger.error(f"Sync failed: {e}")
+    
+    def generate_health_alert(self, health_data):
+        """Generate and send health alerts"""
+        self.logger.warning(f"Health alert: {health_data['alert_message']}")
+        
+        # Send alert to dock
+        self.communication.send_emergency_alert(health_data)
+        
+        # Notify emergency contacts
+        self.communication.notify_emergency_contacts(health_data)
+    
+    def handle_emergency(self, emergency_details):
+        """Handle emergency situations"""
+        self.logger.critical(f"Emergency detected: {emergency_details}")
+        
+        # Activate emergency protocols
+        self.device_controller.activate_emergency_mode()
+        
+        # Notify emergency services
+        self.communication.call_emergency_services(emergency_details)
+        
+        # Guide AURA to emergency location
+        self.navigation.navigate_to(emergency_details['location'])
+    
+    def shutdown_system(self):
+        """Gracefully shutdown AURA system"""
+        self.logger.info("Shutting down AURA system...")
+        self.system_active = False
+        
+        # Stop all subsystems
+        self.sensor_manager.shutdown()
+        self.navigation.shutdown()
+        self.health_monitor.shutdown()
+        self.device_controller.shutdown()
+        self.communication.disconnect()
+        
+        self.logger.info("System shutdown complete")
+
+# Main execution
+if __name__ == "__main__":
+    aura = AuraController()
+    
+    try:
+        if aura.initialize_system():
+            aura.main_loop()
+    except KeyboardInterrupt:
+        aura.logger.info("Shutdown requested by user")
+        aura.shutdown_system()
+    except Exception as e:
+        aura.logger.error(f"Fatal error: {e}")
+        aura.shutdown_system()
+```
+
+### 10.2 Navigation Code
+
+```python
+"""
+AURA Navigation System
+Autonomous pathfinding and obstacle avoidance using A* algorithm
+"""
+
+import math
+import heapq
+import time
+from typing import List, Tuple, Dict
+from sensors import LidarSensor, UltrasonicSensor, IMU
+
+class NavigationSystem:
+    def __init__(self):
+        """Initialize navigation system"""
+        self.current_position = (0, 0)  # (x, y) coordinates
+        self.target_position = (0, 0)
+        self.obstacle_map = {}
+        self.house_map = {}
+        
+        # Sensor initialization
+        self.lidar = LidarSensor()
+        self.ultrasonic = UltrasonicSensor()
+        self.imu = IMU()
+        
+        # Navigation parameters
+        self.motor_speed = 0.5  # 0.0 to 1.0
+        self.safety_margin = 0.3  # meters
+        self.max_obstacle_distance = 2.0  # meters
+    
+    def initialize(self):
+        """Initialize navigation system and sensors"""
+        print("Initializing navigation system...")
+        self.lidar.initialize()
+        self.ultrasonic.initialize()
+        self.imu.initialize()
+        
+        # Load house map from memory
+        self.load_house_map()
+        
+        print("Navigation system initialized")
+    
+    def load_house_map(self):
+        """Load house map from memory"""
+        # This would typically load from persistent storage
+        self.house_map = {
+            'rooms': {
+                'living_room': {'x': 0, 'y': 0, 'width': 5, 'height': 4},
+                'kitchen': {'x': 5, 'y': 0, 'width': 4, 'height': 4},
+                'bedroom': {'x': 0, 'y': 4, 'width': 4, 'height': 4},
+                'bathroom': {'x': 4, 'y': 4, 'width': 3, 'height': 4},
+            },
+            'obstacles': [],
+            'charging_dock': {'x': 0, 'y': 0}
+        }
+    
+    def get_current_position(self):
+        """Get current position from sensors"""
+        # Get position from odometry
+        encoder_position = self.get_odometry_position()
+        
+        # Get orientation from IMU
+        orientation = self.imu.get_orientation()
+        
+        # Combine for accurate position
+        self.current_position = (
+            encoder_position[0],
+            encoder_position[1],
+            orientation
+        )
+        
+        return self.current_position
+    
+    def get_odometry_position(self):
+        """Calculate position from wheel encoders"""
+        # This would integrate encoder readings
+        # Simplified version
+        return (0, 0)
+    
+    def calculate_path(self, start: Tuple[float, float], 
+                      goal: Tuple[float, float]) -> List[Tuple[float, float]]:
+        """
+        Calculate optimal path using A* algorithm
+        
+        Args:
+            start: Starting position (x, y)
+            goal: Target position (x, y)
+            
+        Returns:
+            List of coordinates representing the path
+        """
+        print(f"Calculating path from {start} to {goal}")
+        
+        # A* algorithm implementation
+        open_set = []
+        heapq.heappush(open_set, (0, start))
+        
+        came_from = {}
+        g_score = {start: 0}
+        f_score = {start: self.heuristic(start, goal)}
+        
+        while open_set:
+            current = heapq.heappop(open_set)[1]
+            
+            if self.reached_goal(current, goal):
+                return self.reconstruct_path(came_from, current)
+            
+            # Get neighbors
+            neighbors = self.get_neighbors(current)
+            
+            for neighbor in neighbors:
+                # Check for obstacles
+                if self.is_obstacle(neighbor):
+                    continue
+                
+                tentative_g_score = g_score[current] + self.distance(current, neighbor)
+                
+                if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tentative_g_score
+                    f_score[neighbor] = g_score[neighbor] + self.heuristic(neighbor, goal)
+                    
+                    heapq.heappush(open_set, (f_score[neighbor], neighbor))
+        
+        # No path found
+        return []
+    
+    def heuristic(self, a: Tuple[float, float], b: Tuple[float, float]) -> float:
+        """Calculate heuristic distance (Euclidean)"""
+        return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+    
+    def distance(self, a: Tuple[float, float], b: Tuple[float, float]) -> float:
+        """Calculate Euclidean distance between two points"""
+        return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+    
+    def reached_goal(self, current: Tuple[float, float], 
+                    goal: Tuple[float, float], threshold: float = 0.1) -> bool:
+        """Check if goal is reached within threshold"""
+        return self.distance(current, goal) < threshold
+    
+    def get_neighbors(self, position: Tuple[float, float]) -> List[Tuple[float, float]]:
+        """Get valid neighbor positions for pathfinding"""
+        x, y = position
+        step_size = 0.5  # meters
+        
+        # 8-directional movement
+        neighbors = [
+            (x + step_size, y),
+            (x - step_size, y),
+            (x, y + step_size),
+            (x, y - step_size),
+            (x + step_size, y + step_size),
+            (x - step_size, y + step_size),
+            (x + step_size, y - step_size),
+            (x - step_size, y - step_size)
+        ]
+        
+        # Filter valid positions
+        valid_neighbors = []
+        for neighbor in neighbors:
+            if self.is_valid_position(neighbor):
+                valid_neighbors.append(neighbor)
+        
+        return valid_neighbors
+    
+    def is_valid_position(self, position: Tuple[float, float]) -> bool:
+        """Check if position is within house boundaries"""
+        x, y = position
+        # Simple boundary check
+        return -10 <= x <= 10 and -10 <= y <= 10
+    
+    def is_obstacle(self, position: Tuple[float, float]) -> bool:
+        """Check if position contains an obstacle"""
+        # Check obstacle map
+        if position in self.obstacle_map:
+            return True
+        
+        # Check with real-time sensors
+        obstacle_detected = self.detect_obstacle(position)
+        if obstacle_detected:
+            self.obstacle_map[position] = True
+            return True
+        
+        return False
+    
+    def detect_obstacle(self, position: Tuple[float, float]) -> bool:
+        """Use sensors to detect obstacles"""
+        # Get lidar scan
+        lidar_data = self.lidar.get_scan()
+        
+        # Get ultrasonic readings
+        ultrasonic_data = self.ultrasonic.get_readings()
+        
+        # Analyze data for obstacles
+        min_distance = min(lidar_data + ultrasonic_data)
+        
+        return min_distance < self.safety_margin
+    
+    def reconstruct_path(self, came_from: Dict, current: Tuple[float, float]) -> List[Tuple[float, float]]:
+        """Reconstruct path from came_from dictionary"""
+        path = [current]
+        while current in came_from:
+            current = came_from[current]
+            path.append(current)
+        path.reverse()
+        return path
+    
+    def navigate(self, path: List[Tuple[float, float]]):
+        """Navigate along the calculated path"""
+        if not path:
+            print("No path to navigate")
+            return
+        
+        print(f"Navigating along path with {len(path)} waypoints")
+        
+        for waypoint in path:
+            if not self.navigate_to_waypoint(waypoint):
+                print("Failed to reach waypoint, recalculating path")
+                break
+    
+    def navigate_to_waypoint(self, waypoint: Tuple[float, float]) -> bool:
+        """Navigate to a specific waypoint"""
+        target_x, target_y = waypoint
+        
+        while True:
+            current_x, current_y = self.current_position[:2]
+            distance = math.sqrt((target_x - current_x)**2 + (target_y - current_y)**2)
+            
+            if distance < 0.1:  # Reached waypoint
+                return True
+            
+            # Check for obstacles
+            if self.detect_obstacle(self.current_position):
+                print("Obstacle detected, stopping")
+                self.stop_movement()
+                return False
+            
+            # Move towards waypoint
+            self.move_towards(waypoint)
+            time.sleep(0.1)
+    
+    def move_towards(self, target: Tuple[float, float]):
+        """Move towards target position"""
+        current_x, current_y = self.current_position[:2]
+        target_x, target_y = target
+        
+        # Calculate angle to target
+        angle = math.atan2(target_y - current_y, target_x - current_x)
+        
+        # Move towards target
+        self.set_motors(angle, self.motor_speed)
+    
+    def set_motors(self, angle: float, speed: float):
+        """Control motors to move in direction at speed"""
+        # This would send commands to motor controller
+        # Pentagon-shaped robot uses 5 motors
+        # Calculate motor speeds based on angle
+        print(f"Setting motors: angle={angle}, speed={speed}")
+    
+    def stop_movement(self):
+        """Stop all motors"""
+        print("Stopping movement")
+        self.set_motors(0, 0)
+    
+    def navigate_to(self, location: str):
+        """Navigate to named location"""
+        if location in self.house_map['rooms']:
+            room = self.house_map['rooms'][location]
+            target_position = (room['x'], room['y'])
+            path = self.calculate_path(self.current_position, target_position)
+            self.navigate(path)
+        elif location == 'charging_dock':
+            dock = self.house_map['charging_dock']
+            target_position = (dock['x'], dock['y'])
+            path = self.calculate_path(self.current_position, target_position)
+            self.navigate(path)
+        else:
+            print(f"Unknown location: {location}")
+    
+    def get_target_position(self):
+        """Get current target position"""
+        return self.target_position
+    
+    def set_target_position(self, position: Tuple[float, float]):
+        """Set target position"""
+        self.target_position = position
+    
+    def shutdown(self):
+        """Shutdown navigation system"""
+        print("Shutting down navigation system...")
+        self.stop_movement()
+        self.lidar.shutdown()
+        self.ultrasonic.shutdown()
+        self.imu.shutdown()
+        print("Navigation system shutdown complete")
+```
+
+### 10.3 Health Monitoring Code
+
+```python
+"""
+AURA Health Monitoring System
+Biometric data collection and health analysis
+"""
+
+import time
+import json
+from datetime import datetime
+from typing import Dict, List
+import numpy as np
+
+class HealthMonitor:
+    def __init__(self):
+        """Initialize health monitoring system"""
+        self.vital_signs = {}
+        self.health_history = []
+        self.alert_thresholds = {
+            'heart_rate': {'min': 60, 'max': 100},
+            'blood_pressure_systolic': {'max': 140},
+            'blood_pressure_diastolic': {'max': 90},
+            'temperature': {'max': 37.5},
+            'oxygen_level': {'min': 95}
+        }
+    
+    def initialize(self):
+        """Initialize health monitoring sensors"""
+        print("Initializing health monitoring system...")
+        
+        # Initialize biometric sensors
+        self.thermal_camera = ThermalCamera()
+        self.heart_rate_sensor = HeartRateSensor()
+        self.blood_pressure_sensor = BloodPressureSensor()
+        self.respiration_sensor = RespirationSensor()
+        self.rgb_camera = RGBCamera()
+        
+        self.thermal_camera.initialize()
+        self.heart_rate_sensor.initialize()
+        self.blood_pressure_sensor.initialize()
+        self.respiration_sensor.initialize()
+        self.rgb_camera.initialize()
+        
+        print("Health monitoring system initialized")
+    
+    def collect_biometric_data(self) -> Dict:
+        """Collect biometric data from all sensors"""
+        print("Collecting biometric data...")
+        
+        data = {
+            'timestamp': datetime.now().isoformat(),
+            'heart_rate': self.heart_rate_sensor.get_heart_rate(),
+            'blood_pressure': self.blood_pressure_sensor.get_reading(),
+            'temperature': self.thermal_camera.get_body_temperature(),
+            'oxygen_level': self.heart_rate_sensor.get_oxygen_level(),
+            'respiration_rate': self.respiration_sensor.get_rate(),
+            'activity_level': self.detect_activity_level()
+        }
+        
+        return data
+    
+    def detect_activity_level(self) -> str:
+        """Detect human activity level from camera"""
+        # Use RGB camera to detect movement/activity
+        frame = self.rgb_camera.get_frame()
+        
+        # Process frame to detect activity
+        activity = self.analyze_activity(frame)
+        
+        return activity
+    
+    def analyze_activity(self, frame) -> str:
+        """Analyze frame for activity level"""
+        # Simplified activity detection
+        # In production, this would use computer vision
+        movement_score = self.calculate_movement(frame)
+        
+        if movement_score > 0.7:
+            return 'high'
+        elif movement_score > 0.3:
+            return 'moderate'
+        else:
+            return 'low'
+    
+    def calculate_movement(self, frame) -> float:
+        """Calculate movement score from frame"""
+        # Simplified movement calculation
+        # In production, this would use optical flow
+        return 0.2  # Placeholder
+    
+    def analyze_data(self, health_data: Dict) -> Dict:
+        """Analyze health data and generate alerts"""
+        alerts = []
+        health_status = 'normal'
+        
+        # Heart rate analysis
+        heart_rate = health_data['heart_rate']
+        if heart_rate < self.alert_thresholds['heart_rate']['min']:
+            alerts.append(f"Low heart rate detected: {heart_rate} BPM")
+            health_status = 'abnormal'
+        elif heart_rate > self.alert_thresholds['heart_rate']['max']:
+            alerts.append(f"High heart rate detected: {heart_rate} BPM")
+            health_status = 'abnormal'
+        
+        # Blood pressure analysis
+        bp = health_data['blood_pressure']
+        if bp['systolic'] > self.alert_thresholds['blood_pressure_systolic']['max']:
+            alerts.append(f"High systolic blood pressure: {bp['systolic']} mmHg")
+            health_status = 'abnormal'
+        
+        if bp['diastolic'] > self.alert_thresholds['blood_pressure_diastolic']['max']:
+            alerts.append(f"High diastolic blood pressure: {bp['diastolic']} mmHg")
+            health_status = 'abnormal'
+        
+        # Temperature analysis
+        temp = health_data['temperature']
+        if temp > self.alert_thresholds['temperature']['max']:
+            alerts.append(f"Elevated body temperature: {temp}°C")
+            health_status = 'abnormal'
+        
+        # Oxygen level analysis
+        oxygen = health_data['oxygen_level']
+        if oxygen < self.alert_thresholds['oxygen_level']['min']:
+            alerts.append(f"Low oxygen level: {oxygen}%")
+            health_status = 'critical'
+        
+        # Activity analysis
+        activity = health_data['activity_level']
+        if activity == 'low' and self.check_inactivity_duration() > 4:
+            alerts.append("Extended inactivity detected")
+        
+        # Trend analysis
+        trend = self.analyze_trend(health_data)
+        if trend['decline_detected']:
+            alerts.append("Health trend shows decline")
+            health_status = 'warning'
+        
+        return {
+            'health_status': health_status,
+            'alerts': alerts,
+            'alert_required': len(alerts) > 0,
+            'alert_message': "; ".join(alerts) if alerts else None,
+            'trend': trend
+        }
+    
+    def check_inactivity_duration(self) -> int:
+        """Check duration of inactivity in hours"""
+        # Check activity history
+        # Simplified version
+        return 2  # Placeholder
+    
+    def analyze_trend(self, current_data: Dict) -> Dict:
+        """Analyze health trends over time"""
+        if len(self.health_history) < 5:
+            return {'decline_detected': False}
+        
+        # Get recent health data
+        recent_data = self.health_history[-5:]
+        
+        # Calculate trends
+        trends = {}
+        for key in ['heart_rate', 'temperature']:
+            values = [d[key] for d in recent_data if key in d]
+            if values:
+                trend = np.polyfit(range(len(values)), values, 1)[0]
+                trends[key] = trend
+        
+        # Check for decline
+        decline_detected = False
+        for key, trend in trends.items():
+            if trend < -0.1:  # Negative trend
+                decline_detected = True
+                break
+        
+        return {
+            'decline_detected': decline_detected,
+            'trends': trends
+        }
+    
+    def store_data(self, health_data: Dict):
+        """Store health data in database"""
+        self.health_history.append(health_data)
+        
+        # Keep only last 1000 records
+        if len(self.health_history) > 1000:
+            self.health_history = self.health_history[-1000:]
+    
+    def get_recent_data(self, count: int = 10) -> List[Dict]:
+        """Get recent health data"""
+        return self.health_history[-count:]
+    
+    def perform_full_scan(self) -> Dict:
+        """Perform complete health scan"""
+        print("Performing full health scan...")
+        
+        # Collect data multiple times for accuracy
+        readings = []
+        for i in range(3):
+            data = self.collect_biometric_data()
+            readings.append(data)
+            time.sleep(2)
+        
+        # Average readings
+        averaged_data = self.average_readings(readings)
+        
+        # Analyze data
+        analysis = self.analyze_data(averaged_data)
+        
+        # Store data
+        self.store_data(averaged_data)
+        
+        return {
+            'data': averaged_data,
+            'analysis': analysis
+        }
+    
+    def average_readings(self, readings: List[Dict]) -> Dict:
+        """Average multiple health readings"""
+        averaged = {}
+        
+        for key in readings[0].keys():
+            if key == 'timestamp':
+                averaged[key] = readings[-1][key]
+            elif isinstance(readings[0][key], dict):
+                averaged[key] = {}
+                for subkey in readings[0][key].keys():
+                    values = [r[key][subkey] for r in readings]
+                    averaged[key][subkey] = sum(values) / len(values)
+            else:
+                values = [r[key] for r in readings]
+                averaged[key] = sum(values) / len(values)
+        
+        return averaged
+    
+    def shutdown(self):
+        """Shutdown health monitoring system"""
+        print("Shutting down health monitoring system...")
+        self.thermal_camera.shutdown()
+        self.heart_rate_sensor.shutdown()
+        self.blood_pressure_sensor.shutdown()
+        self.respiration_sensor.shutdown()
+        self.rgb_camera.shutdown()
+        print("Health monitoring system shutdown complete")
+
+# Sensor classes (simplified)
+class ThermalCamera:
+    def initialize(self):
+        print("Thermal camera initialized")
+    
+    def get_body_temperature(self) -> float:
+        return 36.6  # Placeholder
+    
+    def shutdown(self):
+        pass
+
+class HeartRateSensor:
+    def initialize(self):
+        print("Heart rate sensor initialized")
+    
+    def get_heart_rate(self) -> int:
+        return 72  # Placeholder
+    
+    def get_oxygen_level(self) -> float:
+        return 98.0  # Placeholder
+    
+    def shutdown(self):
+        pass
+
+class BloodPressureSensor:
+    def initialize(self):
+        print("Blood pressure sensor initialized")
+    
+    def get_reading(self) -> Dict:
+        return {'systolic': 120, 'diastolic': 80}  # Placeholder
+    
+    def shutdown(self):
+        pass
+
+class RespirationSensor:
+    def initialize(self):
+        print("Respiration sensor initialized")
+    
+    def get_rate(self) -> int:
+        return 16  # Placeholder
+    
+    def shutdown(self):
+        pass
+
+class RGBCamera:
+    def initialize(self):
+        print("RGB camera initialized")
+    
+    def get_frame(self):
+        return None  # Placeholder
+    
+    def shutdown(self):
+        pass
+```

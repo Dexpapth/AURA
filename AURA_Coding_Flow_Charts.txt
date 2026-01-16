@@ -1,0 +1,72 @@
+# AURA Coding Flow Charts and Block Diagrams
+
+## 6.1 Coding Architecture Flow Chart
+
+```
+START CODING SYSTEM
+  |
+  ├-► Initialize Software Components
+  |   ├-► Load Operating System
+  |   ├-► Start Device Drivers
+  |   ├-► Initialize Communication
+  |   └-► Launch Background Services
+  |
+  ├-► Main Control Loop
+  |   ├-► Read Sensor Data
+  |   ├-► Process User Input
+  |   ├-► Execute Tasks
+  |   └-► Update System State
+  |
+  ├-► Navigation Subsystem
+  |   ├-► Read Position Data
+  |   ├-► Calculate Path
+  |   ├-► Control Motors
+  |   └-► Monitor Progress
+  |
+  ├-► Health Monitoring Subsystem
+  |   ├-► Capture Biometric Data
+  |   ├-► Process Health Metrics
+  |   ├-► Compare with Thresholds
+  |   └-► Generate Alerts
+  |
+  ├-► Device Control Subsystem
+  |   ├-► Receive Control Commands
+  |   ├-► Validate Permissions
+  |   ├-► Execute Device Actions
+  |   └-► Confirm Status
+  |
+  ├-► Communication Subsystem
+  |   ├-► Check Network Status
+  |   ├-► Handle Incoming Data
+  |   ├-► Process Outgoing Data
+  |   └-► Maintain Connections
+  |
+  ├-► Data Management
+  |   ├-► Store Sensor Readings
+  |   ├-► Log User Activities
+  |   ├-► Update Health Records
+  |   └-► Backup Data to Dock
+  |
+  ├-► Error Handling
+  |   ├-► Detect Exceptions
+  |   ├-► Log Errors
+  |   ├-► Attempt Recovery
+  |   └-► Notify User if Critical
+  |
+  └-► Continuous Operation
+```
+
+## 6.2 Coding Architecture Block Diagram
+
+```
++-----------------------------------------------------------+
+|              SOFTWARE ARCHITECTURE                        |
++-----------------------------------------------------------+
+|                                                           |
+|  +---------------------+                                 |
+|  |   OPERATING SYSTEM  |                                 |
+|  |   (Embedded Linux)  |                                 |
+|  +---------->----------+                                 |
+|             |                                            |
+|  +----------v----------+   +-------------------------+   |
+|  |   MAIN CONTROLLER   |
